@@ -20,6 +20,7 @@ class TransactionerService(transactionActor: ActorRef)(implicit executionContext
   extends Directives with DefaultJsonFormats {
 
   implicit val timeout = Timeout(2.seconds)
+  implicit val transLogEntry = jsonFormat2(TransLogEntry)
   implicit val greetingFormat = jsonFormat1(TransLog)
 
   val route = getHouseLog ~ getHouseLog
@@ -41,7 +42,7 @@ class TransactionerService(transactionActor: ActorRef)(implicit executionContext
   @ApiResponses(Array(
     new ApiResponse(code = 500, message = "Internal server error")
   ))
-  def getHouseLog =
+  def getUserLog =
     path("get-user-log") {
       get {
         complete { (transactionActor ? GetUserTransLog).mapTo[TransLog] }

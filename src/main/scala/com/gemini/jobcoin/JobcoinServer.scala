@@ -3,26 +3,17 @@ package com.gemini.jobcoin
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import akka.util.Timeout
-import com.gemini.jobcoin.actors.Mixer.{IncomingMoney, InputAddresses, ScheduleTrans}
-import com.gemini.jobcoin.actors.{Mixer, MixerService, Transactioner}
-import com.gemini.jobcoin.actors.Transactioner._
+import akka.http.scaladsl.server.RouteConcatenation
+import com.gemini.jobcoin.actors.Mixer.ScheduleTrans
+import com.gemini.jobcoin.actors.{Mixer, MixerService, Transactioner, TransactionerService}
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
 import com.gemini.jobcoin.swagger.SwaggerDocService
-import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.duration._
 import scala.io.StdIn
 import scala.language.postfixOps
 
-
 object JobcoinServer {
-  implicit val logEntryFormat = jsonFormat2(TransLogEntry)
-  implicit val logFormat = jsonFormat1(TransLog)
-  implicit val transactionFormat = jsonFormat3(Transaction)
-  implicit val inputFormat = jsonFormat1(InputAddresses)
-  implicit val timeout: Timeout = 5.seconds
-
   def main(args: Array[String]) {
 
     implicit val system = ActorSystem("jobcoin-server")

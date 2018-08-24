@@ -22,6 +22,8 @@ class MixerService(mixer: ActorRef)(implicit executionContext: ExecutionContext)
 
   implicit val requestFormat = jsonFormat1(InputAddresses)
   implicit val responseFormat = jsonFormat1(GeneratedAddress)
+  implicit val transRequestFormat = jsonFormat3(Transaction)
+
 
   val route = generateAddress ~ depositMoney
 
