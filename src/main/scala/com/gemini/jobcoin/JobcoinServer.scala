@@ -2,19 +2,16 @@ package com.gemini.jobcoin
 
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import akka.pattern.ask
 import com.gemini.jobcoin.actors.Mixer.{IncomingMoney, InputAddresses, ScheduleTrans}
-import com.gemini.jobcoin.actors.{Mixer, Transactioner}
+import com.gemini.jobcoin.actors.{Mixer, MixerService, Transactioner}
 import com.gemini.jobcoin.actors.Transactioner._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
+import com.gemini.jobcoin.swagger.SwaggerDocService
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.duration._
-import scala.concurrent.Future
 import scala.io.StdIn
 import scala.language.postfixOps
 
@@ -53,41 +50,12 @@ object JobcoinServer {
         |
     """.stripMargin
 
+    val routes =
+      cors() (new MixerService(mixer).route ~
+        new TransactionerService(transactioner).route ~
+        SwaggerDocService.routes)
 
-    val route =
-        post {
-          path("/mixer/get-deposit-address")
-          entity(as[InputAddresses]){ addr => {
-            System.out.println("Input addresses: " + addr.addresses.toString)
-              val genAddr: Future[String] = ask(mixer, addr).mapTo[String]
-              complete(genAddr)
-            }
-          }
-        } ~
-        post {
-          path("/trans/deposit-money")
-          entity(as[Transaction]){ trans => {
-            mixer ! IncomingMoney(trans.to,trans.amount)
-            complete(HttpEntity(ContentTypes.`application/json`,"{success}"))
-          }
-          }
-        } ~
-        {
-          path("")
-          complete(helpText)
-        } ~
-        get {
-          path("/trans/get-house-log")
-          val logs: Future[TransLog] = ask(transactioner,GetHouseTransLog).mapTo[TransLog]
-          complete(logs)
-        } ~
-        {
-          path("/trans/get-user-log")
-          val logs: Future[TransLog] = ask(transactioner,GetUserTransLog).mapTo[TransLog]
-          complete(logs)
-        }
-
-    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
+    val bindingFuture = Http().bindAndHandle(routes, "localhost", 8080)
 
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
     StdIn.readLine() // let it run until user presses return

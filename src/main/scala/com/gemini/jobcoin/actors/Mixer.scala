@@ -1,9 +1,10 @@
 package com.gemini.jobcoin.actors
 
 import java.util.UUID
+
 import akka.actor.{Actor, ActorLogging}
 import com.gemini.jobcoin.actors.Mixer._
-import com.gemini.jobcoin.actors.Transactioner.{TransferMoney, TransferToHouse}
+import com.gemini.jobcoin.actors.Transactioner.{Transaction, TransferMoney, TransferToHouse}
 
 import scala.util.Random
 
@@ -18,17 +19,18 @@ object Mixer {
                        pctfee: Float,
                        feeCharged: BigDecimal)
   case class ScheduleTrans()
-  case class IncomingMoney(addr: String, amount: BigDecimal)
+  case class IncomingMoney(trans: Transaction)
+  case class GeneratedAddress(address: String)
 }
 class Mixer extends Actor with ActorLogging{
   private val homeAddress = "mixer-1983-8260-2786-2232"
   @volatile private var stateMap: Map[String, UserState] = Map.empty
-  def generateNewUserData(x: InputAddresses) : String = {
+  def generateNewUserData(x: InputAddresses) : GeneratedAddress = {
     this.synchronized {
       val addrTo = UUID.randomUUID().toString
       val newUser = UserState(x, BigDecimal(0), BigDecimal(0), addrTo, 0.1F, BigDecimal(0))
       stateMap += (addrTo -> newUser)
-      addrTo
+      GeneratedAddress(addrTo)
     }
   }
 
@@ -54,21 +56,21 @@ class Mixer extends Actor with ActorLogging{
     }
   }
 
-  def updateUserBalance(addr: String, amt: BigDecimal) = {
+  def updateUserBalance(trans: Transaction) = {
     this.synchronized {
-      stateMap.get(addr) match {
+      stateMap.get(trans.to) match {
         case None => throw new IllegalArgumentException("Could not find user for which money was send")
-        case Some(x) => stateMap += (addr -> x.copy(totalAmount = x.totalAmount + amt))
+        case Some(x) => stateMap += (trans.to -> x.copy(totalAmount = x.totalAmount + trans.amount))
       }
     }
-    sender ! TransferToHouse(homeAddress, amt)
+    sender ! TransferToHouse(homeAddress, trans.amount)
   }
 
   override def receive: Receive = {
-    case GenerateAddress(x) => generateNewUserData(x)
+    case GenerateAddress(x) => sender ! generateNewUserData(x)
     case ScheduleTrans() => scheduleTrans()
     case GenerateTransaction(addr) => generateTransaction(addr)
-    case IncomingMoney(addr, amt) => updateUserBalance(addr, amt)
+    case IncomingMoney(trans) => updateUserBalance(trans)
   }
 }
 

@@ -16,24 +16,30 @@ object Transactioner{
 class Transactioner extends Actor with ActorLogging{
 
   @volatile var houseBalance = BigDecimal(0)
-  @volatile var houseTransLog: List[TransLogEntry] = List.empty
-  @volatile var userTransLog: List[TransLogEntry] = List.empty
+  @volatile var houseTransLog: TransLog = TransLog(List.empty)
+  @volatile var userTransLog: TransLog = TransLog(List.empty)
 
-  def transferMoney(trans: Transaction) = {
+  def transferMoney(trans: Transaction): Unit = {
     System.out.println("making fake call to complete user transaction")
-    userTransLog ++ List(TransLogEntry(trans.to,trans.amount - trans.fee))
+    houseBalance -= trans.amount
+    userTransLog.logs ++ List(TransLogEntry(trans.to,trans.amount - trans.fee))
   }
 
-  def transferToHouse(addr: String, amt: BigDecimal) ={
+  def transferToHouse(addr: String, amt: BigDecimal) : String ={
     System.out.println("making fake call to complete house transaction")
     houseBalance += amt
-    houseTransLog ++ List(TransLogEntry(addr,amt))
+    houseTransLog.logs ++ List(TransLogEntry(addr,amt))
+    "Successfully deposited your money!"
   }
+
+  def getUserLog : TransLog = userTransLog
+
+  def getHouseLog : TransLog = houseTransLog
 
   override def receive: Receive = {
     case TransferMoney(x) => transferMoney(x)
-    case TransferToHouse(addr,amt) => transferToHouse(addr, amt)
-    case GetHouseTransLog() => houseTransLog
-    case GetUserTransLog() => userTransLog
+    case TransferToHouse(addr,amt) => sender ! transferToHouse(addr, amt)
+    case GetHouseTransLog() => sender ! getHouseLog
+    case GetUserTransLog() => sender ! getUserLog
   }
 }
