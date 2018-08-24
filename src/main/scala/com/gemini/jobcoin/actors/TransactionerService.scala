@@ -25,7 +25,7 @@ class TransactionerService(transactionActor: ActorRef)(implicit executionContext
 
   val route = getHouseLog ~ getHouseLog
 
-  @Path("/get-house-log")
+  @Path("get-house-log")
   @ApiOperation(value = "Get the log of transactions for the house", notes = "", nickname = "house-log", httpMethod = "GET", response = classOf[TransLog])
   @ApiResponses(Array(
     new ApiResponse(code = 500, message = "Internal server error")
@@ -37,7 +37,7 @@ class TransactionerService(transactionActor: ActorRef)(implicit executionContext
       }
     }
 
-  @Path("/get-user-log")
+  @Path("get-user-log")
   @ApiOperation(value = "Get the log of transactions for the users", notes = "", nickname = "user-log", httpMethod = "GET", response = classOf[TransLog])
   @ApiResponses(Array(
     new ApiResponse(code = 500, message = "Internal server error")

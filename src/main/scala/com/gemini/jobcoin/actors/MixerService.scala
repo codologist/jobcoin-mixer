@@ -25,9 +25,10 @@ class MixerService(mixer: ActorRef)(implicit executionContext: ExecutionContext)
   implicit val transRequestFormat = jsonFormat3(Transaction)
 
 
-  val route = generateAddress ~ depositMoney
+  val route = generateAddress ~
+      depositMoney
 
-  @Path("/get-deposit-address")
+  @Path("get-deposit-address")
   @ApiOperation(value = "Get a new deposit address for the provided input addresses", notes = "", nickname = "get-deposit-addr", httpMethod = "POST")
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "addresses", value = "List of input addresses", required = true, dataType = "InputAddresses", paramType = "body")
@@ -45,7 +46,7 @@ class MixerService(mixer: ActorRef)(implicit executionContext: ExecutionContext)
       }
     }
 
-  @Path("/deposit-money")
+  @Path("deposit-money")
   @ApiOperation(value = "Use this to deposit money to the unique address provided to you", notes = "", nickname = "deposit", httpMethod = "POST")
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "transaction", value = "Transaction details", required = true, dataType = "Transaction", paramType = "body")

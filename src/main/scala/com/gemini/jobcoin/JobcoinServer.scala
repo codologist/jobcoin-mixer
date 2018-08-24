@@ -13,8 +13,8 @@ import scala.concurrent.duration._
 import scala.io.StdIn
 import scala.language.postfixOps
 
-object JobcoinServer {
-  def main(args: Array[String]) {
+object JobcoinServer extends App with RouteConcatenation {
+  override def main(args: Array[String]) {
 
     implicit val system = ActorSystem("jobcoin-server")
     implicit val materializer = ActorMaterializer()
@@ -42,9 +42,7 @@ object JobcoinServer {
     """.stripMargin
 
     val routes =
-      cors() (new MixerService(mixer).route ~
-        new TransactionerService(transactioner).route ~
-        SwaggerDocService.routes)
+      cors() (new MixerService(mixer).route ~ new TransactionerService(transactioner).route ~ SwaggerDocService.routes)
 
     val bindingFuture = Http().bindAndHandle(routes, "localhost", 8080)
 

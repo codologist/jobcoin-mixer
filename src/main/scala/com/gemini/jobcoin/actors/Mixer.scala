@@ -44,10 +44,10 @@ class Mixer extends Actor with ActorLogging{
       case None => throw new IllegalArgumentException("Could not find user for which we are trying to generate transaction")
       case Some(x) => {
         val amtPct = Random.nextFloat()
-        val amtToTransfer = x.amountLeft * BigDecimal(amtPct)
+        val amtToTransfer = x.amountLeft * amtPct.toDouble
         // Charge money if they hold a balance of more than million dollars
         val fee = x.amountLeft > BigDecimal(1000000) match {
-          case true => amtToTransfer * BigDecimal(x.pctfee)
+          case true => amtToTransfer * x.pctfee.toDouble
           case false => BigDecimal(0)
         }
         val randIndex = Random.nextInt(x.transferTos.addresses.length)
