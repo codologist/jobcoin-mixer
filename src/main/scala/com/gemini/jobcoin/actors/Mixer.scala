@@ -5,6 +5,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging}
 import com.gemini.jobcoin.actors.Mixer._
 import com.gemini.jobcoin.actors.Transactioner.{Transaction, TransferMoney, TransferToHouse}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.Random
 
@@ -23,13 +24,17 @@ object Mixer {
   case class GeneratedAddress(address: String)
 }
 class Mixer extends Actor with ActorLogging{
+  val logger: Logger = LoggerFactory.getLogger(Mixer.getClass)
   private val homeAddress = "mixer-1983-8260-2786-2232"
   @volatile private var stateMap: Map[String, UserState] = Map.empty
   def generateNewUserData(x: InputAddresses) : GeneratedAddress = {
     this.synchronized {
+      System.out.println("REquest to geneate a new address")
+      logger.info("Request to generate new address for : " + x.toString)
       val addrTo = UUID.randomUUID().toString
       val newUser = UserState(x, BigDecimal(0), BigDecimal(0), addrTo, 0.1F, BigDecimal(0))
       stateMap += (addrTo -> newUser)
+      logger.debug("sending back generated address : " + addrTo)
       GeneratedAddress(addrTo)
     }
   }
@@ -58,6 +63,7 @@ class Mixer extends Actor with ActorLogging{
 
   def updateUserBalance(trans: Transaction) = {
     this.synchronized {
+      System.out.println("Current state map: " + stateMap.toString)
       stateMap.get(trans.to) match {
         case None => throw new IllegalArgumentException("Could not find user for which money was send")
         case Some(x) => stateMap += (trans.to -> x.copy(totalAmount = x.totalAmount + trans.amount))

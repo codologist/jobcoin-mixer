@@ -31,7 +31,7 @@ class TransactionerService(transactionActor: ActorRef)(implicit executionContext
     new ApiResponse(code = 500, message = "Internal server error")
   ))
   def getHouseLog =
-    path("get-house-log") {
+    path("transactioner" / "get-house-log") {
       get {
           complete { (transactionActor ? GetHouseTransLog).mapTo[TransLog] }
       }
@@ -43,7 +43,7 @@ class TransactionerService(transactionActor: ActorRef)(implicit executionContext
     new ApiResponse(code = 500, message = "Internal server error")
   ))
   def getUserLog =
-    path("get-user-log") {
+    path("transactioner" / "get-user-log") {
       get {
         complete { (transactionActor ? GetUserTransLog).mapTo[TransLog] }
       }
